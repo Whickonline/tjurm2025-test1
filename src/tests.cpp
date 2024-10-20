@@ -1,4 +1,7 @@
 #include "tests.h"
+#include <iostream>
+#include <cmath>
+using namespace std;
 
 // 练习1，实现库函数strlen
 int my_strlen(char *str) {
@@ -7,7 +10,14 @@ int my_strlen(char *str) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
+    int len=0;
+    while(str[len]!='\0')
+    {
+        len++;
+    }
+
+
+    return len;
 }
 
 
@@ -19,7 +29,20 @@ void my_strcat(char *str_1, char *str_2) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    while(*str_1)
+    {
+        str_1++;
+    }
+
+    while (*str_2)
+    {
+        *str_1=*str_2;
+        str_1++;
+        str_2++;
+    }
+    *str_1='\0';
 }
+
 
 
 // 练习3，实现库函数strstr
@@ -31,7 +54,27 @@ char* my_strstr(char *s, char *p) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
+    char * match=NULL;
+    while(*s)
+    {
+        if(*s==*p)
+        {
+            char * temp1=s;
+            char * temp2=p;
+            while(*temp1&&*temp2&&*temp1==*temp2)
+            {
+                temp1++;
+                temp2++;
+            }
+            if(*temp2=='\0')
+            {
+                    match=s;
+                    break;
+            }
+        }
+        s++;
+    }
+    return match;
 }
 
 
@@ -97,6 +140,20 @@ void rgb2gray(float *in, float *out, int h, int w) {
 
     // IMPLEMENT YOUR CODE HERE
     // ...
+    for(int i=0;i<h;i++)
+    {
+        for(int j=0;j<w;j++)
+        {
+            int index=i*w*3+j*3;
+            float R=in[index];
+            float G=in[index+1];
+            float B=in[index+2];
+
+            float gray= 0.1140 * B  + 0.5870 * G + 0.2989 * R ;
+            out[i*w+j]=gray;
+
+        }
+    }
 }
 
 // 练习5，实现图像处理算法 resize：缩小或放大图像
@@ -196,8 +253,52 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
      *        所以需要对其进行边界检查
      */
 
-    int new_h = h * scale, new_w = w * scale;
+    int new_h =static_cast<int>( h * scale), new_w =static_cast<int>( w * scale);
     // IMPLEMENT YOUR CODE HERE
+    for(int y=0;y<new_h;y++)
+    {
+        for(int x=0;x<new_w;x++)
+        {
+            float x0=x/scale;
+            float y0=y/scale;
+
+            float x1=static_cast<int>(x0);
+            float y1=static_cast<int>(y0);
+            float x2=(x1<w-1)?x1+1:x1;
+            float y2=(y1<w-1)?y1+1:y1;
+
+            if(x1<0){x1=0;}
+            if(x2<0){x2=0;}
+            if(y1<0){y1=0;}
+            if(y2<0){y2=0;}
+            if(x1>=w){x1=w-1;}
+            if(x2>=w){x2=w-1;}
+            if(y1>=h){y1=h-1;}
+            if(y2>=h){y2=h-1;}
+
+            for(int k=0;k<c;k++)
+            {
+                int inIndex1 = (y1 * w + x1) * c + k;
+                int inIndex2 = (y1 * w + x2) * c + k;
+                int inIndex3 = (y2 * w + x1) * c + k;
+                int inIndex4 = (y2 * w + x2) * c + k;
+
+                float dx1 = x0 - x1;
+                float dx2 = x2 - x0;
+                float dy1 = y0 - y1;
+                float dy2 = y2 - y0;
+
+                float pixel = (1 - dx1) * (1 - dy1) * in[inIndex1] +
+                              (1 - dx2) * (1 - dy1) * in[inIndex2] +
+                              (1 - dy2) * (1 - dx1) * in[inIndex3] +
+                              dy2 * (1 - dx1) * in[inIndex4];
+
+                int outIndex = (y * new_w + x) * c + k;
+                out[outIndex] = pixel;
+            }
+        }
+    }
+
 
 }
 
@@ -221,4 +322,34 @@ void hist_eq(float *in, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    int hist[256] = {0};
+   
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int g = static_cast<int>(in[i * w + j]);
+            hist[g]++;
+        }
+    }
+    
+  
+    float cdf[256] = {0};
+    float sum = 0;
+    for (int i = 0; i < 256; ++i) {
+        sum += hist[i];
+        cdf[i] = sum / (h * w);
+    }
+    
+    for (int i = 0; i < 256; ++i) {
+        cdf[i] = round(cdf[i] * 255);
+    }
+    
+
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int g = static_cast<int>(in[i * w + j]);
+            int new_g = static_cast<int>(cdf[g]);
+            in[i * w + j] = new_g;
+        }
+    }
 }
+
